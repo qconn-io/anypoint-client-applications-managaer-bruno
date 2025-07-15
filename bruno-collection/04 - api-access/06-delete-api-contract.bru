@@ -1,0 +1,71 @@
+meta {
+  name: Delete API Contract
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{url}}/apimanager/api/v1/organizations/{{organization_id}}/environments/{{environment_id}}/apis/{{api_instance_id}}/contracts/{{contract_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  if (res.status === 204) {
+    console.log("API contract deleted successfully");
+    console.log("Contract ID:", bru.getEnvVar('contract_id'));
+    console.log("Application ID:", bru.getEnvVar('client_app_id'));
+    console.log("API Instance ID:", bru.getEnvVar('api_instance_id'));
+    
+    // Clear contract ID
+    bru.setEnvVar("contract_id", "");
+    console.log("Contract ID cleared from environment");
+    
+  } else {
+    console.error("Failed to delete API contract:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+  test("Response body should be empty", function() {
+    expect(res.getBody()).to.be.empty;
+  });
+}
+
+docs {
+  # Delete API Contract
+  
+  Permanently removes an API contract, revoking the application's access to the API.
+  This action cannot be undone and takes effect immediately.
+  
+  ## Prerequisites
+  - Valid contract ID
+  - Contract must exist and belong to the application
+  
+  ## Effects
+  - Application loses immediate access to the API
+  - All associated rate limiting and policies are removed
+  - Contract cannot be restored (must create new contract)
+  
+  ## Use Cases
+  - Revoke API access for security reasons
+  - Clean up unused or expired contracts
+  - Implement access lifecycle management
+  - Respond to policy violations
+  
+  ## Post-Response Actions
+  - Clears contract ID from environment variables
+  - Application must create new contract for API access
+  
+  ## Warning
+  This operation immediately terminates API access. Ensure proper
+  communication with application owners before deleting contracts.
+}

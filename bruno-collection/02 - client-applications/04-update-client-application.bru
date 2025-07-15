@@ -1,0 +1,79 @@
+meta {
+  name: Update Client Application
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/exchange/api/v2/organizations/{{organization_id}}/applications/{{client_app_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "name": "My Demo App - {{$timestamp}} - Updated",
+    "description": "A demonstration client application created via API. (Updated)",
+    "url": "https://www.example.com/app/updated"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const app = res.getBody();
+    console.log("Client application updated successfully");
+    console.log("Updated Name:", app.name);
+    console.log("Updated Description:", app.description);
+    console.log("Updated URL:", app.url);
+    console.log("Redirect URIs:", app.redirectUri.length);
+  } else {
+    console.error("Failed to update client application:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return updated application", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('name');
+    expect(body.name).to.include('Updated');
+  });
+  
+  test("Should maintain client credentials", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('clientId');
+    expect(body.clientId).to.equal(bru.getEnvVar('client_id'));
+  });
+}
+
+docs {
+  # Update Client Application
+  
+  Updates an existing client application's configuration.
+  Note that client credentials (clientId/clientSecret) remain unchanged.
+  
+  ## Updatable Fields
+  - `name`: Application name
+  - `description`: Application description
+  - `url`: Homepage URL
+  - `redirectUri`: OAuth redirect URIs
+  - `grantTypes`: Supported OAuth flows
+  
+  ## Immutable Fields
+  - Application ID
+  - Client ID
+  - Client Secret
+  - Creation date
+  
+  ## Use Cases
+  - Update application metadata
+  - Modify OAuth configuration
+  - Add/remove redirect URIs
+}

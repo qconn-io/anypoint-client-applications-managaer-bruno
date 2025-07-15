@@ -1,0 +1,78 @@
+meta {
+  name: Get API Instances
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/apimanager/api/v1/organizations/{{organization_id}}/environments/{{environment_id}}/apis
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:query {
+  ascending: false
+  limit: 20
+  offset: 0
+  sort: createdDate
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const response = res.getBody();
+    console.log(`Found ${response.assets.length} API instances:`);
+    
+    response.assets.forEach((api, index) => {
+      console.log(`${index + 1}. ${api.assetId} v${api.assetVersion}`);
+      console.log(`   Instance ID: ${api.id}`);
+      console.log(`   Environment: ${api.environmentId}`);
+      console.log(`   Endpoint: ${api.endpoint?.uri || 'No endpoint configured'}`);
+      
+      // Store first API instance for contract creation
+      if (index === 0) {
+        bru.setEnvVar("api_instance_id", api.id);
+      }
+    });
+    
+    console.log(`Total instances: ${response.total}`);
+    
+  } else {
+    console.error("Failed to get API instances:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return API instances", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('assets');
+    expect(body.assets).to.be.an('array');
+  });
+}
+
+docs {
+  # Get API Instances
+  
+  Retrieves deployed API instances in a specific environment.
+  API instances are required for creating contracts and managing access.
+  
+  ## Prerequisites
+  - Valid environment ID
+  - APIs must be deployed to the target environment
+  
+  ## Response
+  - `assets`: Array of deployed API instances
+  - Each instance includes ID, version, and endpoint information
+  - Instance ID is required for contract creation
+  
+  ## Post-Response Actions
+  - Stores first API instance details for contract operations
+  - These IDs are used in subsequent access management calls
+}

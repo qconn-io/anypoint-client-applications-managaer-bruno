@@ -1,0 +1,86 @@
+meta {
+  name: Create Client Application
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/exchange/api/v2/organizations/{{organization_id}}/applications
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "name": "My Demo App - {{$timestamp}}",
+    "description": "A demonstration client application created via API.",
+    "url": "https://www.example.com/app",
+    "redirectUri": [],
+    "grantTypes": [
+      "client_credentials"
+    ],
+    "apiEndpoints": false
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    const app = res.getBody();
+    bru.setEnvVar("client_app_id", app.id);
+    bru.setEnvVar("client_id", app.clientId);
+    bru.setEnvVar("client_secret", app.clientSecret);
+    
+    console.log("Client application created successfully");
+    console.log("Application ID:", app.id);
+    console.log("Client ID:", app.clientId);
+    console.log("Application Name:", app.name);
+  } else {
+    console.error("Failed to create client application:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Should return application details", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('clientId');
+    expect(body).to.have.property('clientSecret');
+    expect(body).to.have.property('name');
+  });
+  
+  test("Should have correct grant types", function() {
+    const body = res.getBody();
+    expect(body.grantTypes).to.include('client_credentials');
+  });
+}
+
+docs {
+  # Create Client Application
+  
+  This endpoint creates a new client application in Anypoint Exchange.
+  The application will be used to consume APIs and manage API contracts.
+  
+  ## Request Body
+  - `name`: Unique application name (auto-generated with timestamp)
+  - `description`: Application description
+  - `url`: Application homepage URL
+  - `redirectUri`: OAuth redirect URIs
+  - `grantTypes`: Supported OAuth grant types
+  
+  ## Response
+  - `id`: Application ID for management operations
+  - `clientId`: OAuth client ID for API access
+  - `clientSecret`: OAuth client secret for authentication
+  
+  ## Post-Response Actions
+  - Stores application ID, client ID, and client secret in environment variables
+  - These values are used in subsequent credential and contract management operations
+}

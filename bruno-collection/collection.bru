@@ -1,0 +1,55 @@
+meta {
+  name: Anypoint Platform Client Applications Demo
+  seq: 1
+}
+
+docs {
+  # Anypoint Platform Client Applications Demo Collection
+  
+  This collection demonstrates complete client application lifecycle management
+  using Anypoint Platform APIs. It provides a comprehensive workflow for
+  external API management systems to integrate with Anypoint Platform.
+  
+  ## Collection Features
+  
+  ### Global Scripts
+  - **Pre-request**: Request logging and environment variable validation
+  - **Post-response**: Response logging and automatic value extraction
+  - **Error Handling**: Detailed error reporting and troubleshooting guidance
+  
+  ### Automatic Value Storage
+  The collection automatically extracts and stores values from responses:
+  - Authentication tokens from login requests
+  - Application IDs and credentials from creation requests
+  - Contract IDs from API access operations
+  
+  ### Request Logging
+  All requests include detailed logging:
+  - Request method and URL
+  - Request body (for POST/PUT operations)
+  - Response status and timing
+  - Error details for failed requests
+  
+  ## Usage Guidelines
+  
+  ### Sequential Execution
+  Execute folders in order for complete workflow:
+  1. Authentication (required first)
+  2. Client Applications
+  3. Credentials
+  4. API Access
+  
+  ### Environment Variables
+  Configure required variables in environment files:
+  - `connected_app_client_id`
+  - `connected_app_client_secret`
+  - `organization_id`
+  - `environment_id`
+  
+  ### Error Handling
+  Each request includes comprehensive error handling:
+  - Input validation
+  - Response verification
+  - Detailed error logging
+  - Recovery suggestions
+}

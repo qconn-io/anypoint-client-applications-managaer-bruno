@@ -1,0 +1,32 @@
+# Claude AI files
+CLAUDE.md
+.claude/
+*.claude
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Environment files with secrets (keep template)
+bruno-collection/environments/prod.bru
+bruno-collection/environments/staging.bru
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*

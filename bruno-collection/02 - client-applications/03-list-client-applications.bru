@@ -1,0 +1,63 @@
+meta {
+  name: List Client Applications
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/exchange/api/v2/organizations/{{organization_id}}/applications
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const response = res.getBody();
+    console.log(`Found ${response.length} client applications:`);
+    
+    response.forEach((app, index) => {
+      console.log(`${index + 1}. ${app.name} (ID: ${app.id})`);
+      console.log(`   Client ID: ${app.clientId}`);
+      console.log(`   Created: ${new Date(app.createdDate).toLocaleDateString()}`);
+    });
+    
+    console.log(`Total: ${response.total} applications`);
+  } else {
+    console.error("Failed to list client applications:", res.status);
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return applications array", function() {
+    const body = res.getBody();
+    expect(body).to.be.an('array');
+  });
+}
+
+docs {
+  # List Client Applications
+  
+  Retrieves a paginated list of all client applications in the organization.
+  
+  ## Query Parameters
+  - `limit`: Number of applications per page (default: 20)
+  - `offset`: Starting position for pagination (default: 0)
+  
+  ## Response
+  - `applications`: Array of application objects
+  - `total`: Total number of applications
+  - Pagination metadata
+  
+  ## Use Cases
+  - Application discovery and management
+  - Bulk operations on multiple applications
+  - Monitoring application lifecycle
+}

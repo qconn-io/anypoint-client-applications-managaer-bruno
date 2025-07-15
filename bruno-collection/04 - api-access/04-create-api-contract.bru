@@ -1,0 +1,96 @@
+meta {
+  name: Create API Contract
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/apimanager/api/v1/organizations/{{organization_id}}/environments/{{environment_id}}/apis/{{api_instance_id}}/contracts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "applicationId": {{client_app_id}},
+    "acceptedTerms": true,
+    "tierId": {{sla_tier_id}},
+    "requestedTierId": {{sla_tier_id}}
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    const contract = res.getBody();
+    bru.setEnvVar("contract_id", contract.id);
+    
+    console.log("API contract created successfully");
+    console.log("Contract ID:", contract.id);
+    console.log("Application ID:", contract.applicationId);
+    console.log("API Instance ID:", contract.apiId);
+    console.log("SLA Tier ID:", contract.tierId);
+    console.log("Status:", contract.status);
+    console.log("Auto-approved:", contract.approvedOn ? "Yes" : "No");
+    
+    if (contract.approvedOn) {
+      console.log("Approved on:", new Date(contract.approvedOn).toISOString());
+    }
+    
+  } else {
+    console.error("Failed to create API contract:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Should return contract details", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('applicationId');
+    expect(body).to.have.property('apiId');
+  });
+  
+  test("Contract should reference correct application", function() {
+    const body = res.getBody();
+    expect(body.applicationId).to.equal(bru.getEnvVar('client_app_id'));
+  });
+}
+
+docs {
+  # Create API Contract
+  
+  Creates a contract between a client application and an API instance.
+  This grants the application access to the API with specified SLA limits.
+  
+  ## Request Body
+  - `applicationId`: Client application ID
+  - `acceptedTerms`: Must be true to accept API terms
+  - `tierId`: SLA tier ID for rate limiting
+  - `requestedTierId`: Same as tierId for automatic approval
+  
+  ## Prerequisites
+  - Client application must exist
+  - API instance must be deployed
+  - SLA tier must be available
+  
+  ## Response
+  - `id`: Unique contract identifier
+  - `status`: Contract status (APPROVED, PENDING, etc.)
+  - `approvedOn`: Approval timestamp (if auto-approved)
+  
+  ## Contract States
+  - APPROVED: Ready for API access
+  - PENDING: Awaiting manual approval
+  - REJECTED: Access denied
+  
+  ## Post-Response Actions
+  - Stores contract ID for management operations
+  - Contract enables API access with client credentials
+}

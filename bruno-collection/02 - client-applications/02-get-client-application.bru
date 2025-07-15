@@ -1,0 +1,58 @@
+meta {
+  name: Get Client Application Details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/exchange/api/v2/organizations/{{organization_id}}/applications/{{client_app_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const app = res.getBody();
+    console.log("Application Details:");
+    console.log("- Name:", app.name);
+    console.log("- ID:", app.id);
+    console.log("- Client ID:", app.clientId);
+    console.log("- Description:", app.description);
+    console.log("- Grant Types:", app.grantTypes.join(", "));
+  } else {
+    console.error("Failed to retrieve client application:", res.status);
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return application details", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body).to.have.property('name');
+    expect(body).to.have.property('clientId');
+  });
+}
+
+docs {
+  # Get Client Application Details
+  
+  Retrieves detailed information about a specific client application.
+  
+  ## Prerequisites
+  - Valid access token
+  - Application ID from previous create operation
+  
+  ## Response
+  - Complete application configuration
+  - OAuth settings and grant types
+  - Creation and modification timestamps
+  - Associated contracts and API access
+}

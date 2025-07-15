@@ -1,0 +1,66 @@
+meta {
+  name: Delete Client Application
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{url}}/exchange/api/v2/organizations/{{organization_id}}/applications/{{client_app_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  if (res.status === 204) {
+    console.log("Client application deleted successfully");
+    console.log("Application ID:", bru.getEnvVar('client_app_id'));
+    
+    // Clear environment variables
+    bru.setEnvVar("client_app_id", "");
+    bru.setEnvVar("client_id", "");
+    bru.setEnvVar("client_secret", "");
+    
+    console.log("Environment variables cleared");
+  } else {
+    console.error("Failed to delete client application:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+  test("Response body should be empty", function() {
+    expect(res.getBody()).to.be.empty;
+  });
+}
+
+docs {
+  # Delete Client Application
+  
+  Permanently deletes a client application and all associated data.
+  This action cannot be undone.
+  
+  ## Prerequisites
+  - Valid access token
+  - Application ID of the target application
+  
+  ## Effects
+  - Application is permanently removed
+  - All API contracts are terminated
+  - Client credentials become invalid
+  - All associated data is deleted
+  
+  ## Post-Response Actions
+  - Clears related environment variables
+  - Prevents accidental reuse of deleted credentials
+  
+  ## Warning
+  This operation is irreversible. Ensure you have proper authorization
+  and backup procedures before deleting production applications.
+}

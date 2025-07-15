@@ -1,0 +1,54 @@
+meta {
+  name: Generate Access Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/accounts/api/v2/oauth2/token
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "client_secret": "{{connected_app_client_secret}}",
+    "client_id": "{{connected_app_client_id}}",
+    "grant_type": "client_credentials"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const responseBody = res.getBody();
+    bru.setEnvVar("access_token", responseBody.access_token);
+    console.log("Access token generated successfully");
+    console.log("Token expires in:", responseBody.expires_in, "seconds");
+  } else {
+    console.error("Failed to generate access token:", res.status, res.getBody());
+  }
+}
+
+docs {
+  # Generate Access Token
+  
+  This endpoint generates an OAuth2 access token using the Connected App credentials.
+  The token is required for all subsequent Anypoint Platform API calls.
+  
+  ## Prerequisites
+  - Valid Connected App with appropriate permissions
+  - Client ID and Client Secret configured in environment variables
+  
+  ## Response
+  - `access_token`: Bearer token for API authentication
+  - `token_type`: Always "Bearer"
+  - `expires_in`: Token expiration time in seconds
+  
+  ## Post-Response Actions
+  - Automatically stores the access token in environment variable
+  - Token is used in subsequent requests via {{bearer_token}}
+}

@@ -1,0 +1,76 @@
+meta {
+  name: List Available APIs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/exchange/api/v2/assets
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:query {
+  types: rest-api
+  organizationId: {{organization_id}}
+  offset: 0
+  limit: 20
+  includeSnapshots: true
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const response = res.getBody();
+    console.log(`Found ${response.length} APIs:`);
+    
+    response.forEach((api, index) => {
+      console.log(`${index + 1}. ${api.name} (${api.groupId}:${api.assetId}:${api.version})`);
+      console.log(`   Description: ${api.description || 'No description'}`);
+      console.log(`   Status: ${api.status}`);
+      
+      // Store first API for contract examples
+      if (index === 0) {
+        bru.setEnvVar("api_asset_id", api.assetId);
+      }
+    });
+    
+  } else {
+    console.error("Failed to list APIs:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return array of APIs", function() {
+    const body = res.getBody();
+    expect(body).to.be.an('array');
+  });
+}
+
+docs {
+  # List Available APIs
+  
+  Retrieves a list of REST APIs available in the organization's Exchange.
+  These APIs can be used to create contracts with client applications.
+  
+  ## Query Parameters
+  - `types`: Filter by asset type (rest-api, soap-api, etc.)
+  - `limit`: Maximum number of results
+  - `offset`: Pagination offset
+  
+  ## Response
+  - Array of API assets with metadata
+  - Each API includes group ID, asset ID, and version
+  - These identifiers are used for contract creation
+  
+  ## Post-Response Actions
+  - Stores first API details for subsequent contract operations
+  - Logs available APIs for selection
+}

@@ -1,0 +1,86 @@
+meta {
+  name: List Application Contracts
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/apimanager/api/v1/organizations/{{organization_id}}/applications/{{client_app_id}}/contracts
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const contracts = res.getBody();
+    console.log(`Found ${contracts.contracts.length} contracts for application:`);
+    
+    contracts.contracts.forEach((contract, index) => {
+      console.log(`${index + 1}. Contract ID: ${contract.id}`);
+      console.log(`   API: ${contract.api.assetId} v${contract.api.assetVersion}`);
+      console.log(`   SLA Tier: ${contract.tier.name}`);
+      console.log(`   Status: ${contract.status}`);
+      console.log(`   Created: ${new Date(contract.audit.created.date).toLocaleDateString()}`);
+      
+      if (contract.approvedOn) {
+        console.log(`   Approved: ${new Date(contract.approvedOn).toLocaleDateString()}`);
+      }
+      
+      console.log("   ---");
+    });
+    
+    console.log(`Total contracts: ${contracts.total}`);
+    
+  } else {
+    console.error("Failed to list application contracts:", res.status, res.getBody());
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Should return contracts object", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('contracts');
+    expect(body.contracts).to.be.an('array');
+  });
+  
+  test("Should include total count", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('total');
+  });
+}
+
+docs {
+  # List Application Contracts
+  
+  Retrieves all API contracts associated with a specific client application.
+  This shows which APIs the application has access to and their status.
+  
+  ## Prerequisites
+  - Valid client application ID
+  - Application must exist in the environment
+  
+  ## Response
+  - `contracts`: Array of contract objects
+  - `total`: Total number of contracts
+  - Each contract includes API details, SLA tier, and status
+  
+  ## Contract Information
+  - Contract ID and status
+  - Associated API and version
+  - SLA tier and rate limits
+  - Creation and approval timestamps
+  
+  ## Use Cases
+  - Audit application API access
+  - Monitor contract lifecycle
+  - Troubleshoot access issues
+  - Compliance reporting
+}
